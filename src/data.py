@@ -13,7 +13,9 @@ TEST_FILE = "test.csv"
 def load_raw(data_dir=RAW_DATA_DIR):
     """Return (train, test) DataFrames read from ``data_dir``."""
     data_dir = Path(data_dir)
-    missing = [name for name in (TRAIN_FILE, TEST_FILE) if not (data_dir / name).is_file()]
+    missing = [
+        name for name in (TRAIN_FILE, TEST_FILE) if not (data_dir / name).is_file()
+    ]
     if missing:
         raise FileNotFoundError(
             f"Missing {', '.join(missing)} in {data_dir}. "
@@ -26,8 +28,10 @@ def load_raw(data_dir=RAW_DATA_DIR):
 def missing_summary(df):
     """Count and percentage of missing values for columns that have any."""
     counts = df.isnull().sum()
-    summary = pd.DataFrame({
-        "Missing_Count": counts,
-        "Missing_%": counts / len(df) * 100,
-    })
+    summary = pd.DataFrame(
+        {
+            "Missing_Count": counts,
+            "Missing_%": counts / len(df) * 100,
+        }
+    )
     return summary[summary["Missing_Count"] > 0]

@@ -53,10 +53,12 @@ def main(argv=None):
     print("ROC-AUC:", scores["roc_auc"])
 
     model = fit_full(X, y)
-    submission = pd.DataFrame({
-        "PassengerId": test_ids,
-        "Survived": model.predict(X_test).astype(int),
-    })
+    submission = pd.DataFrame(
+        {
+            "PassengerId": test_ids,
+            "Survived": model.predict(X_test).astype(int),
+        }
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     submission.to_csv(args.output, index=False)
     print(f"Submission file created: {args.output}")
