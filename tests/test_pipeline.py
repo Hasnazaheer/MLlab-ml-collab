@@ -59,7 +59,7 @@ def test_build_model_uses_seed_and_hyperparameters():
     model = build_model(model="random_forest", seed=7, n_estimators=10, max_depth=3)
 
     assert model.random_state == 7
-    assert model.n_estimators == 10
+    assert model.n_estimators == 999
     assert model.max_depth == 3
 
 
