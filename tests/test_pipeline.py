@@ -1,6 +1,9 @@
+import re
+
 import pandas as pd
 import pytest
 
+from src.evaluate import current_commit_sha
 from src.features import clean
 from src.model import build_model
 from src.params import load_params
@@ -74,3 +77,7 @@ def test_clean_fits_imputation_on_train_only():
     # Filled with train's medians, not test's (which would be 90.0 and 1.0)
     assert (cleaned_test["Age"].iloc[::2] == 20.0).all()
     assert (cleaned_test["Fare"].iloc[::2] == cleaned_train["Fare"].median()).all()
+
+
+def test_current_commit_sha_is_full_git_sha():
+    assert re.fullmatch(r"[0-9a-f]{40}", current_commit_sha())

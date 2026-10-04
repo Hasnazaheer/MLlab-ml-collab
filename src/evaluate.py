@@ -4,11 +4,13 @@ Usage (from anywhere):
     python src/evaluate.py
 
 Reads models/model.pkl and data/processed/test.csv, and writes
-outputs/predictions.csv and metrics.json.
+outputs/predictions.csv and metrics.json. The metrics file also records
+the Git commit SHA the run was made from.
 """
 
 import json
 import pickle
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,7 +23,28 @@ from src.data import TEST_FILE
 from src.features import TARGET
 from src.model import score
 from src.params import load_params, set_seed
-from src.paths import METRICS_FILE, MODEL_FILE, PREDICTIONS_FILE, PROCESSED_DATA_DIR
+from src.paths import (
+    METRICS_FILE,
+    MODEL_FILE,
+    PREDICTIONS_FILE,
+    PROCESSED_DATA_DIR,
+    PROJECT_ROOT,
+)
+
+
+def current_commit_sha():
+    """Return the full SHA of the checked-out Git commit, or "unknown"."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return result.stdout.strip()
 
 
 def main():
@@ -47,12 +70,15 @@ def main():
     predictions.to_csv(PREDICTIONS_FILE, index=False)
 
     metrics = score(y, y_pred, y_proba)
+    metrics["commit_sha"] = current_commit_sha()
     with open(METRICS_FILE, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
         f.write("\n")
 
     for name, value in metrics.items():
-        print(f"{name}: {value:.4f}")
+        print(
+            f"{name}: {value:.4f}" if isinstance(value, float) else f"{name}: {value}"
+        )
     print(f"Predictions written to: {PREDICTIONS_FILE}")
     print(f"Metrics written to: {METRICS_FILE}")
 
