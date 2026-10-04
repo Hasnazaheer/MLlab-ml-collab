@@ -11,7 +11,9 @@ DROP_COLS = ["Name", "Ticket", "PassengerId"]
 def clean(train, test):
     """Cap Fare outliers, impute missing values and drop Cabin.
 
-    Returns new DataFrames; the inputs are not modified.
+    Every statistic (Fare cap, Age/Fare medians, Embarked mode) is fitted
+    on ``train`` only and then applied to both, so nothing leaks from
+    ``test``. Returns new DataFrames; the inputs are not modified.
     """
     train, test = train.copy(), test.copy()
 
@@ -23,10 +25,13 @@ def clean(train, test):
 
     # Assign rather than fillna(inplace=True): inplace on a column is a
     # no-op under pandas 3 copy-on-write
-    train["Age"] = train["Age"].fillna(train["Age"].median())
-    test["Age"] = test["Age"].fillna(test["Age"].median())
-    train["Embarked"] = train["Embarked"].fillna(train["Embarked"].mode()[0])
-    test["Fare"] = test["Fare"].fillna(test["Fare"].median())
+    age_median = train["Age"].median()
+    fare_median = train["Fare"].median()
+    embarked_mode = train["Embarked"].mode()[0]
+    for df in (train, test):
+        df["Age"] = df["Age"].fillna(age_median)
+        df["Fare"] = df["Fare"].fillna(fare_median)
+        df["Embarked"] = df["Embarked"].fillna(embarked_mode)
 
     return train.drop(columns="Cabin"), test.drop(columns="Cabin")
 

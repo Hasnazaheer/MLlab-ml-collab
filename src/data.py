@@ -10,18 +10,27 @@ TRAIN_FILE = "train.csv"
 TEST_FILE = "test.csv"
 
 
-def load_raw(data_dir=RAW_DATA_DIR):
-    """Return (train, test) DataFrames read from ``data_dir``."""
-    data_dir = Path(data_dir)
-    missing = [
-        name for name in (TRAIN_FILE, TEST_FILE) if not (data_dir / name).is_file()
-    ]
+def _require(data_dir, names):
+    """Raise FileNotFoundError if any of ``names`` is missing from ``data_dir``."""
+    missing = [name for name in names if not (data_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(
             f"Missing {', '.join(missing)} in {data_dir}. "
-            "Download the Titanic dataset (Kaggle: titanic) and place "
-            f"{TRAIN_FILE} and {TEST_FILE} in data/raw/."
+            "Run `dvc pull` to download the Titanic dataset into data/raw/."
         )
+
+
+def load_train(data_dir=RAW_DATA_DIR):
+    """Return the labelled Titanic DataFrame read from ``data_dir``."""
+    data_dir = Path(data_dir)
+    _require(data_dir, [TRAIN_FILE])
+    return pd.read_csv(data_dir / TRAIN_FILE)
+
+
+def load_raw(data_dir=RAW_DATA_DIR):
+    """Return (train, test) DataFrames read from ``data_dir``."""
+    data_dir = Path(data_dir)
+    _require(data_dir, [TRAIN_FILE, TEST_FILE])
     return pd.read_csv(data_dir / TRAIN_FILE), pd.read_csv(data_dir / TEST_FILE)
 
 

@@ -1,32 +1,42 @@
-"""Model definition, validation and final fitting."""
+"""Model definition and scoring."""
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-def build_model():
-    """Standard-scaled logistic regression."""
-    return make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
+def build_model(model="random_forest", seed=42, **hyperparams):
+    """Return an unfitted classifier.
 
-
-def evaluate(X, y, test_size=0.2, random_state=42):
-    """Fit on a train split and score the held-out split.
-
-    Returns a dict with the classification report text and ROC-AUC.
+    ``model`` and ``hyperparams`` come from the ``train`` section of
+    params.yaml; ``seed`` fixes the model's own randomness.
     """
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
+    if model == "random_forest":
+        return RandomForestClassifier(random_state=seed, **hyperparams)
+    if model == "logistic_regression":
+        return make_pipeline(
+            StandardScaler(),
+            LogisticRegression(random_state=seed, **hyperparams),
+        )
+    raise ValueError(
+        f"Unknown model {model!r}; expected 'random_forest' or 'logistic_regression'"
     )
-    model = build_model().fit(X_train, y_train)
+
+
+def score(y_true, y_pred, y_proba):
+    """Return classification metrics as a plain dict of floats."""
     return {
-        "report": classification_report(y_val, model.predict(X_val)),
-        "roc_auc": roc_auc_score(y_val, model.predict_proba(X_val)[:, 1]),
+        "accuracy": float(accuracy_score(y_true, y_pred)),
+        "precision": float(precision_score(y_true, y_pred)),
+        "recall": float(recall_score(y_true, y_pred)),
+        "f1": float(f1_score(y_true, y_pred)),
+        "roc_auc": float(roc_auc_score(y_true, y_proba)),
     }
-
-
-def fit_full(X, y):
-    """Fit the model on all labelled data."""
-    return build_model().fit(X, y)

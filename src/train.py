@@ -1,10 +1,13 @@
-"""Train the Titanic survival model and write a submission CSV.
+"""Train stage: fit the model on the prepared training data.
 
 Usage (from anywhere):
-    python src/train.py [--data-dir DIR] [--output PATH]
+    python src/train.py
+
+Reads data/processed/train.csv and writes models/model.pkl.
+Model type and hyperparameters come from params.yaml.
 """
 
-import argparse
+import pickle
 import sys
 from pathlib import Path
 
@@ -13,55 +16,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 
-from src.data import load_raw, missing_summary
-from src.features import preprocess
-from src.model import evaluate, fit_full
-from src.paths import OUTPUT_DIR, RAW_DATA_DIR
+from src.data import TRAIN_FILE
+from src.features import TARGET
+from src.model import build_model
+from src.params import load_params, set_seed
+from src.paths import MODEL_FILE, PROCESSED_DATA_DIR
 
 
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--data-dir",
-        type=Path,
-        default=RAW_DATA_DIR,
-        help="Directory containing train.csv and test.csv (default: data/raw)",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=OUTPUT_DIR / "submission.csv",
-        help="Submission CSV path (default: outputs/submission.csv)",
-    )
-    parser.add_argument("--test-size", type=float, default=0.2)
-    parser.add_argument("--random-state", type=int, default=42)
-    return parser.parse_args(argv)
+def main():
+    params = load_params()
+    set_seed(params["seed"])
 
+    train = pd.read_csv(PROCESSED_DATA_DIR / TRAIN_FILE)
+    X, y = train.drop(columns=TARGET), train[TARGET]
 
-def main(argv=None):
-    args = parse_args(argv)
+    model = build_model(seed=params["seed"], **params["train"]).fit(X, y)
 
-    train, test = load_raw(args.data_dir)
-    print("Train Shape:", train.shape)
-    print("Test Shape:", test.shape)
-    print("\nMissing Analysis:\n", missing_summary(train))
-
-    X, y, X_test, test_ids = preprocess(train, test)
-
-    scores = evaluate(X, y, args.test_size, args.random_state)
-    print(scores["report"])
-    print("ROC-AUC:", scores["roc_auc"])
-
-    model = fit_full(X, y)
-    submission = pd.DataFrame(
-        {
-            "PassengerId": test_ids,
-            "Survived": model.predict(X_test).astype(int),
-        }
-    )
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    submission.to_csv(args.output, index=False)
-    print(f"Submission file created: {args.output}")
+    MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(MODEL_FILE, "wb") as f:
+        pickle.dump(model, f)
+    print("Train Shape:", X.shape)
+    print("Model:", model)
+    print(f"Model written to: {MODEL_FILE}")
 
 
 if __name__ == "__main__":
