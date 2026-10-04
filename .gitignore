@@ -11,3 +11,8 @@ mlruns/
 *.pyc
 .ipynb_checkpoints/
 outputs/
+
+# DVC local files (cache, credentials, temp)
+.dvc/cache/
+.dvc/config.local
+.dvc/tmp/
