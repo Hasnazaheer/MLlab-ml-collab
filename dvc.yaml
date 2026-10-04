@@ -1,0 +1,41 @@
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+      - data/raw/train.csv
+      - src/data.py
+      - src/features.py
+      - src/prepare.py
+    params:
+      - seed
+      - split.test_size
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - data/processed/train.csv
+      - src/model.py
+      - src/train.py
+    params:
+      - seed
+      - train
+    outs:
+      - models/model.pkl
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - data/processed/test.csv
+      - models/model.pkl
+      - src/evaluate.py
+      - src/model.py
+    params:
+      - seed
+    outs:
+      - outputs/predictions.csv
+    metrics:
+      - metrics.json:
+          cache: false

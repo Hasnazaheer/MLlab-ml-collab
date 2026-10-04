@@ -21,4 +21,6 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: '\.dvc$'
+        # .dvc files hold md5 hashes and metrics.json holds the Git commit SHA;
+        # both look like secrets to the high-entropy check but are not
+        exclude: '(\.dvc$|^metrics\.json$)'
