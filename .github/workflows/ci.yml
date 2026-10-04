@@ -36,8 +36,14 @@ jobs:
         run: uv run pytest tests/
 
       - name: Pull DVC data
-        run: uv run dvc pull
-
+        env:
+          DVC_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+          DVC_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          uv run dvc remote modify origin --local auth basic
+          uv run dvc remote modify origin --local user "$DVC_USERNAME"
+          uv run dvc remote modify origin --local password "$DVC_PASSWORD"
+          uv run dvc pull
       - name: Data checks
         run: |
           test -f data/raw/train.csv
