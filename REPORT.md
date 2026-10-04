@@ -11,8 +11,7 @@ Repository: https://github.com/Hasnazaheer/MLlab-ml-collab
 
 - **Dataset:** Titanic (binary classification, target `Survived`), from Kaggle:
   https://www.kaggle.com/c/titanic/data
-- **Starter code:** the `titanic.ipynb` notebook supplied with the lab, refactored into
-  `src/` in PR #2: https://github.com/Hasnazaheer/MLlab-ml-collab/pull/2
+- **Starter code:** under the `src/` directory.
 
 ## 2. Reproducibility table
 
