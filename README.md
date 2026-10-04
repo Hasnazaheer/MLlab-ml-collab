@@ -9,7 +9,9 @@ Titanic Dataset
 
 ## Task
 Binary Classification
+### Review Notes
 
+This section documents the review workflow used during Phase 7.
 ## Project
 Git-based collaboration and reproducible machine learning pipeline using Git, DVC, and CI.
 
