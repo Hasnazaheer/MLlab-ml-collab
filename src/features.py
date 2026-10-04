@@ -25,7 +25,9 @@ def clean(train, test):
     # no-op under pandas 3 copy-on-write
     train["Age"] = train["Age"].fillna(train["Age"].median())
     test["Age"] = test["Age"].fillna(test["Age"].median())
-    train["Embarked"] = train["Embarked"].fillna(train["Embarked"].mode()[0])
+    embarked_mode = train["Embarked"].mode()[0]
+    train["Embarked"] = train["Embarked"].fillna(embarked_mode)
+    test["Embarked"] = test["Embarked"].fillna(embarked_mode)
     test["Fare"] = test["Fare"].fillna(test["Fare"].median())
 
     return train.drop(columns="Cabin"), test.drop(columns="Cabin")

@@ -1,0 +1,92 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 2309cc5f04782ed9bb6016d9f4e381cf
+      size: 61194
+    - path: src/data.py
+      hash: md5
+      md5: bbae7f53668072d52a815a063284174d
+      size: 1302
+    - path: src/features.py
+      hash: md5
+      md5: 42e573f257f370d8984942526eb83e63
+      size: 2366
+    - path: src/prepare.py
+      hash: md5
+      md5: 343e82750fa837bce2d312c8291d3727
+      size: 1971
+    params:
+      params.yaml:
+        seed: 42
+        split.test_size: 0.2
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 11f9f821580dc8b5fa2eae01110d4cba
+      size: 11526
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 33c8223ea33bf5f5325f0dcbf35e0c1a
+      size: 45559
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 33c8223ea33bf5f5325f0dcbf35e0c1a
+      size: 45559
+    - path: src/model.py
+      hash: md5
+      md5: f03bfab23e0ceb604845fcb3e49a707b
+      size: 1397
+    - path: src/train.py
+      hash: md5
+      md5: 07ed2ef4ff98e23ccc914bf347617c05
+      size: 1154
+    params:
+      params.yaml:
+        seed: 42
+        train:
+          model: random_forest
+          n_estimators: 100
+          max_depth: 6
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 8e12692ed1fceb940a6c33c50e91f191
+      size: 635025
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 11f9f821580dc8b5fa2eae01110d4cba
+      size: 11526
+    - path: models/model.pkl
+      hash: md5
+      md5: 8e12692ed1fceb940a6c33c50e91f191
+      size: 635025
+    - path: src/evaluate.py
+      hash: md5
+      md5: a7da5dd965b3b23b5e96cbce6aaa7b6e
+      size: 1657
+    - path: src/model.py
+      hash: md5
+      md5: f03bfab23e0ceb604845fcb3e49a707b
+      size: 1397
+    params:
+      params.yaml:
+        seed: 42
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: 43b82b5aec505f607cea4a6786ec9e10
+      size: 172
+    - path: outputs/predictions.csv
+      hash: md5
+      md5: f87a2c5f5e33c28b5b3f3588567f089b
+      size: 4393
