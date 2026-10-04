@@ -9,16 +9,16 @@ stages:
       size: 61855
     - path: src/data.py
       hash: md5
-      md5: 0d91efb783bd0f189e19d7fcc0aeaf45
-      size: 1347
+      md5: bbae7f53668072d52a815a063284174d
+      size: 1302
     - path: src/features.py
       hash: md5
-      md5: babedd3df707bc5c72ec43195dc8aed5
-      size: 2486
+      md5: 9069670f5648c4cae5dad6c62a9fbe2d
+      size: 2419
     - path: src/prepare.py
       hash: md5
-      md5: 6f4c1cfb82725623c1a5ead5a439bbd8
-      size: 2037
+      md5: 343e82750fa837bce2d312c8291d3727
+      size: 1971
     params:
       params.yaml:
         seed: 42
@@ -41,24 +41,24 @@ stages:
       size: 44756
     - path: src/model.py
       hash: md5
-      md5: 3fd4ee1c525683e70ff3562a17905d25
-      size: 1439
+      md5: f03bfab23e0ceb604845fcb3e49a707b
+      size: 1397
     - path: src/train.py
       hash: md5
-      md5: 62cc21272b3b62b0cc2292a84e7d7061
-      size: 1198
+      md5: 07ed2ef4ff98e23ccc914bf347617c05
+      size: 1154
     params:
       params.yaml:
         seed: 42
         train:
           model: random_forest
           n_estimators: 50
-          max_depth: 6
+          max_depth: 10
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 3321a4896c970288173d976b315a51bc
-      size: 624659
+      md5: 9c26fbc393a776f9924c2338043388f3
+      size: 829590
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -68,25 +68,25 @@ stages:
       size: 11312
     - path: models/model.pkl
       hash: md5
-      md5: 3321a4896c970288173d976b315a51bc
-      size: 624659
+      md5: 9c26fbc393a776f9924c2338043388f3
+      size: 829590
     - path: src/evaluate.py
       hash: md5
-      md5: 50d41a6d718ecc4a95909acefbf44729
-      size: 2414
+      md5: f2be78e26cf892dedcbad13898dacf73
+      size: 2327
     - path: src/model.py
       hash: md5
-      md5: 3fd4ee1c525683e70ff3562a17905d25
-      size: 1439
+      md5: f03bfab23e0ceb604845fcb3e49a707b
+      size: 1397
     params:
       params.yaml:
         seed: 42
     outs:
     - path: metrics.json
       hash: md5
-      md5: a123b73da9129b0aeeec49b5f0366b1e
-      size: 225
+      md5: 026045f75f125b705a497a552bdb9241
+      size: 224
     - path: outputs/predictions.csv
       hash: md5
-      md5: ad50a058a20363aea76f17f2c8b5529c
-      size: 4201
+      md5: de5ed36386ed7b0c1cc3cceb1950ffc6
+      size: 3898

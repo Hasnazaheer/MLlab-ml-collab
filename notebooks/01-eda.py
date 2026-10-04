@@ -27,8 +27,8 @@
 # ## 1. Load Libraries and Data
 
 # %%
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Load the Titanic data using project-relative paths.
 train_df = pd.read_csv("../data/raw/train.csv")
