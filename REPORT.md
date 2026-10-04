@@ -1,283 +1,128 @@
 # MLLab ML Collaboration — Final Report
 
 Repository: https://github.com/Hasnazaheer/MLlab-ml-collab
-DVC remote (DagsHub): https://dagshub.com/hasnazaheer861/MLlab-ml-collab
-Release tag: `model-v1.0`
 
-## 1. Team members and roles
+## 1. Team, roles, dataset and starter code
 
-| Member | GitHub | Role | Main responsibilities |
-|---|---|---|---|
-| Hasna Zaheer | `Hasnazaheer` | Data Owner | Repository setup, DVC and DagsHub, dataset versions, EDA, CI |
-| Muhammad Tayyab | `tyb01` | Model Owner | Code refactor, environment, model pipeline, parameters, experiments, release tag |
-
-## 2. Dataset and source
-
-- **Dataset:** Titanic passenger survival (binary classification, target `Survived`).
-- **Source:** Kaggle "Titanic - Machine Learning from Disaster",
-  https://www.kaggle.com/c/titanic/data
-- **Storage:** the CSV files are tracked with DVC and stored on DagsHub. Git holds
-  only the pointer files `data/raw/train.csv.dvc` and `data/raw/test.csv.dvc`.
-
-| Version | Rows | Change |
+| Member | GitHub | Role |
 |---|---|---|
-| v1 | 891 | Original Kaggle `train.csv` |
-| v2 (released) | 889 | 2 rows with missing `Embarked` removed |
+| Hasna Zaheer | `Hasnazaheer` | Data Owner |
+| Muhammad Tayyab | `tyb01` | Model Owner |
 
-`data/raw/test.csv` (418 rows) is the unlabelled Kaggle test file. It is tracked but
-not used by the pipeline, because it has no target to score against.
+- **Dataset:** Titanic (binary classification, target `Survived`), from Kaggle:
+  https://www.kaggle.com/c/titanic/data
+- **Starter code:** the `titanic.ipynb` notebook supplied with the lab, refactored into
+  `src/` in PR #2: https://github.com/Hasnazaheer/MLlab-ml-collab/pull/2
 
-## 3. Pipeline
+## 2. Reproducibility table
 
-Defined in `dvc.yaml` and run with `uv run dvc repro`.
+Released model, tag `model-v1.0`:
 
-| Stage | Script | Input | Output |
-|---|---|---|---|
-| prepare | `src/prepare.py` | `data/raw/train.csv` | `data/processed/train.csv` (711 rows), `data/processed/test.csv` (178 rows) |
-| train | `src/train.py` | `data/processed/train.csv` | `models/model.pkl` |
-| evaluate | `src/evaluate.py` | model, `data/processed/test.csv` | `outputs/predictions.csv`, `metrics.json` |
-
-- **Parameters:** all in `params.yaml` (`seed`, `split.test_size`, `train.model`,
-  `train.n_estimators`, `train.max_depth`).
-- **Seeds:** seed 42 is used for the stratified train/test split, the model's
-  `random_state`, and Python's and NumPy's global generators in every stage.
-- **Leakage prevention:** the data is split first. The Fare outlier cap, the Age and
-  Fare medians and the Embarked mode are computed on the training split only and then
-  applied to both splits. One-hot columns are taken from the training split.
-- **Traceability:** `metrics.json` records the Git commit the run was made from.
-
-## 4. Released model and final metrics
-
-| Setting | Value |
+| Item | Value |
 |---|---|
-| Model | Random Forest |
-| `n_estimators` | 50 |
-| `max_depth` | 10 |
-| `seed` | 42 |
-| `split.test_size` | 0.2 (stratified) |
-| Dataset | v2 |
-
-`metrics.json` on `main`:
-
-| Metric | Value |
-|---|---|
+| Commit SHA | `e899b6ddd404e8ed553f945cbc2626fc6785c6ca` |
+| `params.yaml` | `seed: 42`, `split.test_size: 0.2`, `train.model: random_forest`, `train.n_estimators: 50`, `train.max_depth: 10` |
+| Seed | 42 |
+| Data `.dvc` hash (`data/raw/train.csv.dvc`) | md5 `60f1e0596f5db46961ced72d593736e2` |
+| Lock file (`dvc.lock`) | md5 `482d4727c89764b3e400f84ef7bb9f20` |
 | accuracy | 0.7921348314606742 |
 | precision | 0.7313432835820896 |
 | recall | 0.7205882352941176 |
 | f1 | 0.725925925925926 |
 | roc_auc | 0.8064839572192513 |
 
-## 5. Reproducibility table
+Hasna reproduced these metrics exactly from a fresh clone of `staging` with
+`uv sync`, `dvc pull` and `dvc repro`.
 
-The released configuration was run by both members. All metric values match exactly.
+## 3. Experiment comparison
 
-| Run | By | accuracy | precision | recall | f1 | roc_auc |
-|---|---|---|---|---|---|---|
-| Model Owner's run | Tayyab | 0.7921348314606742 | 0.7313432835820896 | 0.7205882352941176 | 0.725925925925926 | 0.8064839572192513 |
-| Fresh clone of `staging` | Hasna | 0.7921348314606742 | 0.7313432835820896 | 0.7205882352941176 | 0.725925925925926 | 0.8064839572192513 |
-| Released on `main` | — | 0.7921348314606742 | 0.7313432835820896 | 0.7205882352941176 | 0.725925925925926 | 0.8064839572192513 |
+Output of `dvc exp show` (file-hash columns omitted).
 
-Steps used for the fresh reproduction:
+**Tayyab: `n_estimators`**
 
-```bash
-git clone https://github.com/Hasnazaheer/MLlab-ml-collab.git
-cd MLlab-ml-collab
-git checkout staging
-uv sync
-uv run dvc pull
-uv run dvc repro
-```
-
-## 6. Experiment comparison
-
-### 6.1 `n_estimators` (Tayyab)
-
-Run with `dvc exp run --set-param train.n_estimators=<n>`. Dataset v1, `max_depth` 6,
-seed 42.
-
-| Experiment | n_estimators | accuracy | precision | recall | f1 | roc_auc | Outcome |
+| Experiment | accuracy | precision | recall | f1 | roc_auc | train.n_estimators | train.max_depth |
 |---|---|---|---|---|---|---|---|
-| baseline | 100 | 0.8324 | 0.8197 | 0.7246 | 0.7692 | 0.8524 | Replaced |
-| `tayyab-n-est-50` | 50 | 0.8324 | 0.8095 | 0.7391 | 0.7727 | 0.8514 | **Winner** (PR #10) |
-| `tayyab-n-est-200` | 200 | 0.8324 | 0.8305 | 0.7101 | 0.7656 | 0.8504 | Abandoned |
-| `tayyab-n-est-300` | 300 | 0.8324 | 0.8305 | 0.7101 | 0.7656 | 0.8478 | Abandoned |
+| exp/tayyab-n-estimators (baseline) | 0.8324 | 0.81967 | 0.72464 | 0.76923 | 0.85237 | 100 | 6 |
+| ├── 0f95a17 [tayyab-n-est-300] | 0.8324 | 0.83051 | 0.71014 | 0.76562 | 0.84776 | 300 | 6 |
+| ├── 3409592 [tayyab-n-est-200] | 0.8324 | 0.83051 | 0.71014 | 0.76562 | 0.8504 | 200 | 6 |
+| └── 5936dd8 [tayyab-n-est-50] | 0.8324 | 0.80952 | 0.73913 | 0.77273 | 0.85138 | 50 | 6 |
 
-### 6.2 `max_depth` (Hasna and Tayyab)
+**Hasna: `max_depth`**
 
-| max_depth | By | PR |
-|---|---|---|
-| 6 | baseline | #9 |
-| 8 | Hasna | #13 |
-| 10 (released) | Tayyab | #12 |
+| Experiment | accuracy | precision | recall | f1 | roc_auc |
+|---|---|---|---|---|---|
+| main | 0.79213 | 0.73134 | 0.72059 | 0.72593 | 0.80648 |
+| ├── 4f503b6 [hasna-depth-8] | 0.82022 | 0.8 | 0.70588 | 0.75 | 0.81517 |
+| ├── dfff189 [hasna-depth-6] | 0.82022 | 0.81034 | 0.69118 | 0.74603 | 0.83984 |
+| └── 71ecbd9 [hasna-depth-4] | 0.81461 | 0.78689 | 0.70588 | 0.74419 | 0.84766 |
 
-### 6.3 Pipeline runs recorded in the repository
+**Why the winner was chosen**
 
-| PR | Dataset | n_estimators | max_depth | accuracy | precision | recall | f1 | roc_auc |
-|---|---|---|---|---|---|---|---|---|
-| #9 | v1 | 100 | 6 | 0.8324 | 0.8197 | 0.7246 | 0.7692 | 0.8524 |
-| #10 | v1 | 50 | 6 | 0.8324 | 0.8095 | 0.7391 | 0.7727 | 0.8514 |
-| #11 | v2 | 100 | 6 | 0.8146 | 0.7966 | 0.6912 | 0.7402 | 0.8381 |
-| #18 | v2 | 50 | 10 | 0.7921 | 0.7313 | 0.7206 | 0.7259 | 0.8065 |
+- `tayyab-n-est-50`: all four settings have the same accuracy; 50 trees gives the best
+  F1 and recall and is the smallest model. Merged in PR #10.
+- `hasna-depth-8`: ties for the best accuracy and has the best F1.
 
-## 7. Why the winner was selected
+## 4. Links
 
-**`n_estimators` = 50.** All four settings reached the same accuracy (0.8324). 50 trees
-gave the best F1 (0.7727) and the best recall (0.7391), with ROC-AUC within 0.001 of the
-baseline, and it is the smallest and fastest model. Finding survivors (recall) matters
-more than a slightly higher precision, so 50 was merged in PR #10.
+| Item | Link |
+|---|---|
+| Data-update PR | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/11 |
+| Conflict-resolution PR | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/11 |
+| "Changes requested" review | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/16 |
+| Release PR, `dev` → `staging` | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/20 |
+| Release PR, `staging` → `main` | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/21 |
+| Abandoned `exp/` branch | https://github.com/Hasnazaheer/MLlab-ml-collab/tree/exp/tayyab-n-est-200 |
 
-**`max_depth` = 10.** This was the last `max_depth` change merged into `dev`, after
-`max_depth` 8. The released configuration (`n_estimators` 50, `max_depth` 10) scores
-lower on dataset v2 than the earlier run with `n_estimators` 100 and `max_depth` 6
-(accuracy 0.7921 against 0.8146). We discuss this in the retrospective.
+## 5. Screenshots
 
-## 8. Required PR links
+### Blocked large file
 
-### Data-update PR
+![Blocked large file](docs/img/blocked-large-file.png)
 
-- PR #11, `data/update-dataset` → `dev`:
-  https://github.com/Hasnazaheer/MLlab-ml-collab/pull/11
-- Removed the 2 rows with missing `Embarked`; `train.csv` went from 891 to 889 rows.
-
-### Conflict PR
-
-- PR #11: https://github.com/Hasnazaheer/MLlab-ml-collab/pull/11
-- The data branch and the `n_estimators` experiment (PR #10) both changed `dvc.lock`
-  and `metrics.json`. Hasna merged `dev` into the data branch and resolved the conflict
-  there.
-
-Other PRs with conflicts:
-[#8](https://github.com/Hasnazaheer/MLlab-ml-collab/pull/8)
-(`.gitignore`, `pyproject.toml`, `uv.lock`) and
-[#4](https://github.com/Hasnazaheer/MLlab-ml-collab/pull/4)
-(`pyproject.toml`, `uv.lock`).
-
-### Changes-requested review
-
-- PR #16, `fix/gitignore` → `dev`:
-  https://github.com/Hasnazaheer/MLlab-ml-collab/pull/16
-- Opened by Tayyab and reviewed by Hasna, who requested changes. Tayyab pushed the
-  requested fix and Hasna then approved and merged it.
-
-### Release PRs
-
-| PR | Direction | Link |
-|---|---|---|
-| #20 | `dev` → `staging` | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/20 |
-| #21 | `staging` → `main` | https://github.com/Hasnazaheer/MLlab-ml-collab/pull/21 |
-
-Tag `model-v1.0` ("First production model") was created on `main` after PR #21.
-
-## 9. Abandoned experiment
-
-`tayyab-n-est-200` and `tayyab-n-est-300` were run and then abandoned.
-
-- Both gave the same accuracy as the baseline (0.8324) with lower recall (0.7101 against
-  0.7246) and lower F1 (0.7656 against 0.7692).
-- ROC-AUC fell as trees were added: 0.8524 (100), 0.8504 (200), 0.8478 (300).
-- More trees cost more training time and a larger model for no gain, so neither was
-  merged.
-
-## 10. CI
-
-Workflow: `.github/workflows/ci.yml`. It runs on every pull request into `dev`,
-`staging` and `main`:
-
-1. Install dependencies with `uv sync --dev`
-2. `ruff check .`
-3. `ruff format --check .`
-4. `pytest tests/`
-5. `dvc pull`
-6. Data check: `data/raw/train.csv` and `data/raw/test.csv` exist
-7. Smoke training: `dvc repro`
-
-### CI failure
+### Failing CI check
 
 ![CI failure](docs/img/ci-failure.png)
 
-### CI success
+### Passing CI check
 
 ![CI success](docs/img/ci-success.png)
 
-## 11. Each member's contribution
+## 6. Retrospective
+
+**What broke**
+
+- `max_depth` was changed in `params.yaml` (PRs #12 and #13) without re-running the
+  pipeline, so `dvc.lock` and `metrics.json` no longer matched the parameters.
+- After the conflict in PR #11, `params.yaml` and `dvc.lock` did not describe the same
+  run.
+- `dvc push` worked but the DagsHub page was empty, because the DagsHub repository was
+  not connected to GitHub. We recreated it as a connected repository.
+
+**What we added to CONTRIBUTING.md because of it**
+
+- Pull requests use merge commits, and `dev`, `staging` and `main` only change through
+  pull requests, promoted `dev` → `staging` → `main`.
+- If `dvc.lock` or `metrics.json` conflict, run `uv run dvc repro` after resolving
+  instead of picking one side by hand.
+
+## 7. Each member's contribution
 
 ### Hasna Zaheer — Data Owner
 
-- **Repository setup:** I created the project structure and the first pre-commit
-  configuration (PR #1).
-- **DVC and data:** I initialised DVC, connected the DagsHub remote and tracked
-  `train.csv` and `test.csv` (PR #6).
-- **EDA:** I wrote `notebooks/01-eda.ipynb`. It covers the dataset structure, missing
-  values, the target, passenger class, sex, age, fare and family features, with
-  visualisations and conclusions (PR #8).
-- **Dataset update:** I created dataset v2 by removing the rows with missing
-  `Embarked`, re-ran the pipeline, and resolved the conflict in `dvc.lock` and
-  `metrics.json` (PR #11).
-- **CI:** I wrote the GitHub Actions workflow with lint, format check, tests, DVC pull,
-  data checks and smoke training. I broke a test on purpose to show a failing run, then
-  fixed it, and added DagsHub authentication through GitHub secrets (PR #18).
-- **Experiments:** I set `max_depth` to 8 (PR #13) and added experiment results
-  (PR #14).
-- **Reproduction:** I cloned the repository into a fresh folder, checked out `staging`,
-  ran `dvc pull` and `dvc repro`, and confirmed the metrics match Tayyab's exactly.
-- **Reviews:** I reviewed and merged PRs #2, #4, #9, #16, #19, #20 and #21, and
-  requested changes on PR #16. I also documented our review workflow (PR #17).
+I created the project structure and the pre-commit configuration (PR #1). I set up DVC
+with the DagsHub remote and tracked the dataset (PR #6). I wrote the EDA notebook
+(PR #8). I updated the dataset by removing rows with missing `Embarked` and resolved the
+conflict in `dvc.lock` and `metrics.json` (PR #11). I wrote the GitHub Actions CI
+workflow and showed a failing and a passing run (PR #18). I ran three `max_depth`
+experiments (4, 6, 8) and reproduced the released metrics from a fresh clone. I reviewed
+and merged PRs #2, #4, #9, #16, #19, #20 and #21, and requested changes on PR #16.
 
 ### Muhammad Tayyab — Model Owner
 
-- **Code refactor:** I moved the starter notebook code into reusable modules in `src/`
-  and removed hardcoded paths, so the code runs on any machine (PR #2).
-- **Environment:** I set up uv with `pyproject.toml` and `uv.lock`, and documented the
-  setup in the README and `CONTRIBUTING.md` (PR #2).
-- **Model pipeline:** I built the three DVC stages `prepare`, `train` and `evaluate`
-  in `dvc.yaml` (PR #9).
-- **Parameters:** I moved the seed, split ratio and hyperparameters into `params.yaml`
-  (PR #9).
-- **Training:** I train a Random Forest whose type and hyperparameters are read from
-  `params.yaml`, with the seed applied to the split and the model (PR #9).
-- **Leakage fix:** I changed imputation so the Age and Fare medians come from the
-  training split only, and added a test that guards it (PR #9).
-- **Metrics:** I made the evaluate stage write `metrics.json` with accuracy, precision,
-  recall, F1, ROC-AUC and the Git commit of the run (PR #9).
-- **Experiments:** I ran three `n_estimators` experiments (50, 200, 300) against the
-  baseline of 100 and merged the winner (PR #10). I also set `max_depth` to 10 (PR #12).
-- **Tests:** I wrote `tests/test_preprocessing.py` (PR #8) and the pipeline tests in
-  `tests/test_pipeline.py` (PR #9).
-- **Release:** I refreshed `dvc.lock` and fixed a lint failure before release (PR #19),
-  opened the release PRs #20 and #21, and created the tag `model-v1.0`.
-- **Reviews:** I reviewed and merged PRs #1, #6, #8, #11, #13, #14, #17 and #18.
-
-## 12. Retrospective
-
-### What went well
-
-- **Reproducibility worked.** Both of us ran the released configuration and got the
-  same metric values to every digit.
-- **Splitting data and code.** DVC with DagsHub kept the CSV files out of Git while
-  every commit still pins the exact data version.
-- **Branch protection and PRs.** No change reached `dev`, `staging` or `main` without
-  a pull request.
-- **CI caught a real problem.** The lint step failed on a line-length error before the
-  release, and we fixed it in PR #19.
-
-### What went wrong
-
-- **Parameters changed without re-running the pipeline.** PRs #12 and #13 changed
-  `max_depth` in `params.yaml` without running `dvc repro`, so `dvc.lock` and
-  `metrics.json` no longer matched the parameters. We only saw the effect when the
-  pipeline was re-run in PR #18, and the released model scores lower than an earlier
-  configuration.
-- **A conflict resolution left the lock file inconsistent.** After the PR #11 conflict,
-  `params.yaml` and `dvc.lock` did not describe the same run.
-- **DagsHub was not connected to GitHub at first.** `dvc push` succeeded but the
-  DagsHub page was empty, because the DagsHub repository had no Git history. We
-  recreated it as a repository connected to GitHub.
-
-### What we would do differently
-
-- Make every experiment PR include the re-run `dvc.lock` and `metrics.json`, and add a
-  CI step that fails when the pipeline is out of date.
-- After resolving a conflict in `dvc.lock` or `metrics.json`, always run `dvc repro`
-  instead of choosing one side by hand.
-- Change one parameter at a time on a fixed dataset version, so results are comparable.
-- Push experiments with `dvc exp push`, so both of us can see them in `dvc exp show`.
+I refactored the starter notebook into `src/` and set up the uv environment (PR #2). I
+built the `prepare`, `train` and `evaluate` DVC stages, moved the seed, split ratio and
+hyperparameters into `params.yaml`, fixed data leakage in imputation, and made the
+evaluate stage write `metrics.json` with the commit SHA (PR #9). I ran three
+`n_estimators` experiments (50, 200, 300) and merged the winner (PR #10). I wrote the
+unit tests, opened the release PRs #20 and #21, and created the tag `model-v1.0`. I
+reviewed and merged PRs #1, #6, #8, #11, #13, #14, #17 and #18.
