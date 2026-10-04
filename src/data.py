@@ -11,8 +11,7 @@ TEST_FILE = "test.csv"
 
 
 def _require(data_dir, names):
-    """Raise FileNotFoundError if any of the files in ``names`` are missing from ``data_dir``."""
-
+    """Raise FileNotFoundError if any of ``names`` is missing from ``data_dir``."""
     missing = [name for name in names if not (data_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(
