@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from src.features import clean
 from src.model import build_model
 from src.params import load_params
 from src.prepare import split_and_process
@@ -62,3 +63,14 @@ def test_build_model_uses_seed_and_hyperparameters():
 def test_build_model_rejects_unknown_model():
     with pytest.raises(ValueError):
         build_model(model="unknown")
+
+
+def test_clean_fits_imputation_on_train_only():
+    train = _raw().assign(Age=[10.0, 20.0, 30.0, None] * 10)
+    test = _raw(8).assign(Age=[None, 90.0] * 4, Fare=[None, 1.0] * 4)
+
+    cleaned_train, cleaned_test = clean(train, test)
+
+    # Filled with train's medians, not test's (which would be 90.0 and 1.0)
+    assert (cleaned_test["Age"].iloc[::2] == 20.0).all()
+    assert (cleaned_test["Fare"].iloc[::2] == cleaned_train["Fare"].median()).all()
