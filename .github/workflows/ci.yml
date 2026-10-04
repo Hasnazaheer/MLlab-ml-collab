@@ -35,11 +35,14 @@ jobs:
       - name: Run tests
         run: uv run pytest tests/
 
+      - name: Pull DVC data
+        run: uv run dvc pull
+
       - name: Data checks
         run: |
-          test -f data/raw/train.csv.dvc
-          test -f data/raw/test.csv.dvc
-          echo "DVC data pointer files exist"
+          test -f data/raw/train.csv
+          test -f data/raw/test.csv
+          echo "DVC data files exist"
 
       - name: Smoke training
         run: uv run dvc repro
