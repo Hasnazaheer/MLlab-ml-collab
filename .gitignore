@@ -1,4 +1,8 @@
+# Raw data files
 data/raw/*.csv
+
+# Allow DVC pointer files
+!data/raw/*.dvc
 models/
 .env
 __pycache__/
@@ -7,3 +11,8 @@ mlruns/
 *.pyc
 .ipynb_checkpoints/
 outputs/
+
+# DVC local files (cache, credentials, temp)
+.dvc/cache/
+.dvc/config.local
+.dvc/tmp/
