@@ -9,8 +9,8 @@ stages:
       size: 61855
     - path: src/data.py
       hash: md5
-      md5: a1aee0088e9253060687acd0bd0525a1
-      size: 1448
+      md5: 7fc0d59efc5c4c5a039178b477c30717
+      size: 1432
     - path: src/features.py
       hash: md5
       md5: babedd3df707bc5c72ec43195dc8aed5
