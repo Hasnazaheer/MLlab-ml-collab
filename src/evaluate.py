@@ -1,5 +1,5 @@
 """Evaluate stage: score the trained model on the held-out test split.
-ev
+
 Usage (from anywhere):
     python src/evaluate.py
 
